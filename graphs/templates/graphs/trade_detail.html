@@ -1,0 +1,22 @@
+<h1> {{trade.symbol}} </h1>
+<b>{{trade.date}}</b>
+
+<p> Shares traded: {{trade.volume}} </p>
+<p> Closed P&L: ${{trade.pnl}} </p>
+
+<table>
+	<tr>
+		<th> Date/time </th>
+		<th> Symbol </th>
+		<th> Quantity </th>
+		<th> Price </th>
+	</tr>
+	{% for execution in trade.execution_set.all %}
+		<tr>
+			<td> {{trade.date}} </td>
+			<td> {{trade.symbol}} </td>
+			<td> {{execution.quantity}} </td>
+			<td> {{execution.price}} </td>
+		</tr>
+	{% endfor %}
+</table>

@@ -1,0 +1,18 @@
+<form action="{% url 'filter' %}" method="get">
+	<label for="symbol_filter"> symbol: </label>
+	<input id="symbol_filter" type="text" name="symbol_filter">
+	
+	<label for="tag_filter"> tag: </label>
+	<input id="tag_filter" type="text" name="tag_filter">
+	
+	<label for="start_filter"> start date: </label>
+	<input id="start_filter" type="date" name="start_filter">
+	
+	<label for="end_filter"> end date: </label>
+	<input id="end_filter" type="date" name="end_filter">
+
+	<input type="submit" value="Search">
+</form>
+<form action="{% url 'index' %}" method="get">
+	<input type="submit" value="Clear">
+</form>

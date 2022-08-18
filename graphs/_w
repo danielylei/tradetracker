@@ -1,0 +1,95 @@
+from django.shortcuts import render
+from .models import Trade, Execution, Tag
+from django.http import HttpResponseRedirect
+from .calcs import totals
+import datetime
+from .uploadFile import UploadFileForm
+import csv
+
+def index(request):
+    current_date = datetime.datetime.now()
+    all_trades_list = Trade.objects.order_by('date').all()
+    past_year_trades_list = Trade.objects.order_by('date').filter(date__year= current_date.year)
+    past_month_trades_list = Trade.objects.order_by('date').filter(date__month = current_date.month)
+    past_week_trades_list = Trade.objects.order_by('date').filter(date__week=current_date.isocalendar()[1])
+    today_trades_list = Trade.objects.order_by('date').filter(date=current_date)
+    context = {'all_trades_list': all_trades_list,
+               'past_year_trades_list': past_year_trades_list,
+               'past_month_trades_list': past_month_trades_list,
+               'past_week_trades_list': past_week_trades_list,
+               'today_trades_list': today_trades_list,
+               'all_stats': totals(all_trades_list),
+               'y_stats': totals(past_year_trades_list),
+               'm_stats': totals(past_month_trades_list),
+               'w_stats': totals(past_week_trades_list),
+               't_stats': totals(today_trades_list),
+               }
+    return render(request, 'graphs/index.html', context)
+
+def trade_detail(request, trade_id):
+    context = {'trade': Trade.objects.get(pk=trade_id)}
+    return render(request, 'graphs/trade_detail.html', context)
+
+def filter(request):
+    print(request.GET['symbol_filter'])
+
+    current_date = datetime.datetime.now()
+    all_trades_list = Trade.objects.order_by('date').all()
+    if (request.GET['symbol_filter'] != ""):
+        print('filtered symbol')
+        all_trades_list = all_trades_list.filter(symbol__startswith=request.GET['symbol_filter'])
+
+    if (request.GET['start_filter'] != ""):
+        print(request.GET['start_filter'].split('-'))
+        d = request.GET['start_filter'].split('-')
+        start_date = datetime.datetime(int(d[0]), int(d[1]), int(d[2]))
+
+        all_trades_list = all_trades_list.filter(date__gt=start_date)
+    
+    if (request.GET['end_filter'] != ""):
+        print(request.GET['end_filter'].split('-'))
+        d = request.GET['end_filter'].split('-')
+        end_date = datetime.datetime(int(d[0]), int(d[1]), int(d[2]))
+
+        all_trades_list = all_trades_list.filter(date__lt=end_date)
+
+
+    
+
+    past_year_trades_list = all_trades_list.filter(date__year= current_date.year)
+    past_month_trades_list = all_trades_list.filter(date__month = current_date.month)
+    past_week_trades_list = all_trades_list.filter(date__week=current_date.isocalendar()[1])
+    today_trades_list = all_trades_list.filter(date=current_date)
+    context = {'all_trades_list': all_trades_list,
+               'past_year_trades_list': past_year_trades_list,
+               'past_month_trades_list': past_month_trades_list,
+               'past_week_trades_list': past_week_trades_list,
+               'today_trades_list': today_trades_list,
+               'all_stats': totals(all_trades_list),
+               'y_stats': totals(past_year_trades_list),
+               'm_stats': totals(past_month_trades_list),
+               'w_stats': totals(past_week_trades_list),
+               't_stats': totals(today_trades_list),
+               }
+    return render(request, 'graphs/index.html', context)
+
+def upload_files(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        print(form)
+        if form.is_valid():
+            handle_uploaded_file(request.FILES['file'])
+            return HttpResponseRedirect('/')
+            #rememeber to change to '/'
+        else:
+            print('fail')
+    else:
+        form = UploadFileForm()
+    return render(request, 'graphs/upload.html', {'form': form})
+
+def handle_uploaded_file(f):
+#with each file, we create a new set of trades and executions
+    reader = csv.reader(f, delimiter=",")
+    for r in reader:
+        print(r)
+        print('/n')
